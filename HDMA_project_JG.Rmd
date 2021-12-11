@@ -1,0 +1,73 @@
+---
+title: "HMDA_project_JG"
+author: "James Gilbert"
+date: "12/9/2021"
+output: html_document
+---
+
+```{r}
+library(httr)
+library(tidyverse)
+#library(jsonlite)
+```
+
+```{r}
+url_LEI <- 'https://ffiec.cfpb.gov/v2/data-browser-api/view/filers?states=WA&years=2020'
+response_WA_LEI <- GET(url_LEI) 
+lei_WA <- content(response_WA_LEI, type = 'text') %>% 
+  jsonlite::fromJSON() %>% 
+  .[[1]] %>%                      # Select the first element of the resulting list
+  as_tibble()
+```
+```{r}
+lei_WA
+
+```
+
+
+```{r}
+url <- 'https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?states=WA&years=2020'
+
+response <- GET(url)
+
+HMDA<-content(response, as = "text") %>%
+  read_csv()
+```
+
+```{r}
+head(HMDA, n = 5)
+```
+
+```{r}
+lei_WA %>% 
+  select(name,count) %>% 
+  top_n(5, count)
+```
+
+
+https://ffiec.cfpb.gov/v2/data-browser-api/view/filers?states=WA&years=2020
+https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?states=WA&years=2020
+
+
+Merge the LEI dataframe with the HMDA dataframe so we can correlate institution name with the LEI. 
+```{r}
+HMDA<- HMDA %>%
+  left_join(x=HMDA, y =lei_WA, by = 'lei')
+
+```
+
+```{r}
+HMDA %>%
+  group_by(action_taken, derived_race) %>%
+  
+  
+#
+```
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
