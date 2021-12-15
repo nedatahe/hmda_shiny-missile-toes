@@ -12,27 +12,20 @@ library(shiny)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
-  states <- reactive({
-    input$states
+  filtered_loans <- callModule(
+    module = selectizeGroupServer,
+    id = "geography",
+    data = loans,
+    vars = c("state_code", "derived_msa-md", "census_tract", "lei")
+  )
+  
+ 
+  
+  output$test <- renderPlot({
+    filtered_loans() %>% 
+      group_by(derived_race) %>% 
+      ggplot(aes(x = derived_race, fill = derived_sex)) +
+      geom_bar()
   })
 
-  years <- reactive({
-    input$years
-  })
-
-  loans <- reactive({
-    hmda(states(), years())
-  })
-  
-  # output$ <- renderPlot({
-  # 
-  #   # generate bins based on input$bins from ui.R
-  #   x    <- faithful[, 2]
-  #   bins <- seq(min(x), max(x), length.out = input$bins + 1)
-  # 
-  #   # draw the histogram with the specified number of bins
-  #   hist(x, breaks = bins, col = 'darkgray', border = 'white')
-  # 
-  # })
-  
 })
