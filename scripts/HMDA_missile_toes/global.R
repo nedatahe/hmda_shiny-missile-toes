@@ -1,5 +1,7 @@
 library(tidyverse)
 library(httr)
+library(DT)
+library(plotly)
 
 #reading in state names for the selector dropdown
 

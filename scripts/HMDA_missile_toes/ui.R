@@ -38,7 +38,20 @@ shinyUI(fluidPage(
     
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput("test")
+      fluidRow(
+        plotOutput("test")
+      ),
+      fluidRow(
+        column(
+          plotlyOutput("sex"),
+          width = 5
+        ),
+        column(
+          plotlyOutput("race"),
+          width = 7
+        )
+      )
+      
     )
   )
 ))
