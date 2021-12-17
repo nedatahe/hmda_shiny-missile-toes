@@ -1,0 +1,95 @@
+---
+title: "project"
+author: "Neda Taherkhani"
+date: "12/9/2021"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(corrr)
+library(readxl)
+library(plotly)
+```
+
+```{r}
+data <- read_csv('data/state_WA.csv')
+#url <- 'https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?states=WA&years=2020'
+#response <- GET(url)
+#HMDA<-content(response, as = "text") %>%
+  #read_csv()
+```
+
+```{r}
+columns <- colnames(data)
+ columns 
+```
+```{r}
+head(data, n = 5)
+```
+
+
+```{r}
+length(unique(data$lei))
+```
+
+```{r}
+unique(data$lei)
+```
+
+```{r}
+unique(data$action_taken) 
+```
+
+
+```{r}
+unique(data$derived_sex)
+
+```
+
+```{r}
+data_selected<- data %>% 
+  select(lei, derived_ethnicity, derived_race, derived_sex, interest_rate, debt_to_income_ratio, action_taken, census_tract, tract_population, tract_minority_population_percent, applicant_age, applicant_age_above_62) 
+data_selected
+```
+  
+```{r}
+p <- data_selected %>% 
+  
+  ggplot(aes(fill = as_factor(action_taken), x = derived_sex)) +
+  geom_bar(position='fill') +
+    scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+ggplotly(p)
+```
+
+
+```{r}
+p <- data_selected %>% 
+  #mutate(action_taken = )
+  ggplot(aes(fill = as_factor(action_taken), x = derived_sex)) +
+  geom_bar(position = 'fill') +
+    scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+ggplotly(p)
+```
+```{r}
+p <- data_selected %>%
+  filter(action_taken == 1) %>% 
+  ggplot(aes(fill = as_factor(derived_race), x = derived_sex)) +
+  geom_bar(position = 'fill') +
+    scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+ggplotly(p)
+```
+
+
+```{r}
+data_selected %>% 
+  group_by(derived_sex) %>% 
+  summarize(mean(interest_rate, na.rm = T))
+```
+
+
+
+
+```{r}
+
+
+
