@@ -23,6 +23,11 @@ lei_WA <- content(response_WA_LEI, type = 'text') %>%
 lei_WA
 
 ```
+```{r}
+lei_WA %>% 
+  ggplot(aes(count))+
+  geom_histogram(bins = 50)
+```
 
 
 ```{r}
@@ -57,11 +62,100 @@ HMDA<- HMDA %>%
 ```
 
 ```{r}
-HMDA %>%
-  group_by(action_taken, derived_race) %>%
+#Code from George to add LARS lookups.
+data <- read_lines("../hmda_shiny-missile-toes/data/lars_lookup (1).csv")
+lars_names <- c()
+options <- c()
+for (i in 1:length(data)){
+  if (grepl( "^1 - ", data[i],)) {
+    print(data[i - 3])
+    j <- 0
+    while (grepl( " - ", data[i + j],)) {
+      options <- c(options, data[i + j])
+      lars_names <- c(lars_names, data[i - 3])
+      j <- j + 1
+    }
+  }
+}
+lars_tib <- tibble(lars_names = lars_names, options = options)
+
+```
+
+```{r}
+lars_tib <- lars_tib %>% separate(options, c("key", "value"), " - ", extra = "merge")
+write_csv(lars_tib, "../hmda_shiny-missile-toes/data/lars_lookup (1).csv")
+```
+
+
+
+I want to begin exploring the data set for WA by comparing the 'protected' classes from the HMDA
+
+```{r}
+HMDA_selected<- HMDA %>% 
+  select(lei, derived_ethnicity, derived_race, derived_sex, interest_rate, debt_to_income_ratio, action_taken, census_tract, tract_population, tract_minority_population_percent, applicant_age, applicant_age_above_62, name, count) 
+HMDA_selected
+```
+
+```{r}
+HMDA_selected %>% 
+  group_by(derived_race) %>% 
+  summarise(denied = sum(action_taken=='3', na.rm = TRUE)) %>% 
+  mutate(derived_race = fct_reorder(derived_race, denied)) %>%  
+  ggplot(aes(x=derived_race,y=denied, fill = derived_race))+
+  geom_col()+
+  coord_flip()
   
-  
-#
+```
+
+```{r}
+HMDA_selected %>% 
+  group_by(derived_race) %>% 
+  summarise(approved = sum(action_taken=='1', na.rm=TRUE)) %>% 
+  mutate(derived_race = fct_reorder(derived_race, approved)) %>% 
+  ggplot(aes(x=derived_race,y=approved, fill = derived_race))+
+  geom_col()+
+  coord_flip()
+```
+
+
+Next time: work on making these graphs a proportion of the derived race instead of a count of the loans. 
+Also work on adding in derived ethnicity and transmuting a new column. 
+Use a weighted mean and weight by population size
+Also weight by bank size. 
+I don't see a column for disability
+Download the data for the PNW and send it in the slack group. Oregon, washington, Idaho
+
+
+
+
+```{r}
+HMDA_selected %>% 
+  group_by(derived_race, debt_to_income_ratio) %>% 
+  summarise(approved = sum(action_taken =='1', na.rm=TRUE)) %>% 
+  mutate(derived_race = fct_reorder(derived_race, approved)) %>% 
+  ggplot(aes(x=derived_race,y=approved, fill = derived_race))+
+  geom_col()+
+  coord_flip()
+
+```
+```{r}
+correlation_df <-HMDA_selected %>%
+  select(where(is.numeric)) %>%
+  cor(x = HMDA_selected['tract_minority_population_percent'] , use = 'complete.obs') %>%
+  as_tibble() %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname, 'class', 'cor') %>%
+  arrange(desc(value))
+```
+
+```{r}
+correlation_df %>%
+  ggplot(aes(x = reorder(x= class, X = value), y = value, fill = (value < 0))) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Corellations with ") +
+  ylab("Correlation") +
+  xlab("Variable")
 ```
 
 
