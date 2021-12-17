@@ -12,57 +12,82 @@ library(tidyverse)
 ```
 
 ```{r}
-url_LEI <- 'https://ffiec.cfpb.gov/v2/data-browser-api/view/filers?states=WA&years=2020'
-response_WA_LEI <- GET(url_LEI) 
-lei_WA <- content(response_WA_LEI, type = 'text') %>% 
-  jsonlite::fromJSON() %>% 
-  .[[1]] %>%                      # Select the first element of the resulting list
-  as_tibble()
-```
-```{r}
-lei_WA
-
-```
-```{r}
-lei_WA %>% 
-  ggplot(aes(count))+
-  geom_histogram(bins = 50)
+HMDA_PNW<- read_csv('data/state_WA-OR-ID-MT.csv')
 ```
 
 
+USE THIS CODE FOR API CALL FOR PNW.
 ```{r}
-url <- 'https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?states=WA&years=2020'
+url <- 'https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?states=WA,MT,ID,OR&years=2020'
 
 response <- GET(url)
 
 HMDA<-content(response, as = "text") %>%
   read_csv()
 ```
-
 ```{r}
-head(HMDA, n = 5)
+url_LEI <- 'https://ffiec.cfpb.gov/v2/data-browser-api/view/filers?states=WA,MT,ID,OR&years=2020'
+response_PNW_LEI <- GET(url_LEI) 
+lei_PNW <- content(response_PNW_LEI, type = 'text') %>% 
+  jsonlite::fromJSON() %>% 
+  .[[1]] %>%                      # Select the first element of the resulting list
+  as_tibble()
+```
+
+Merge the LEI dataframe with the HMDA dataframe so we can correlate institution name with the LEI. 
+```{r}
+HMDA_PNW<- HMDA_PNW %>%
+  left_join(x=HMDA_PNW, y =lei_PNW, by = 'lei')
+
 ```
 
 ```{r}
-lei_WA %>% 
+lei_PNW %>% 
+  ggplot(aes(count))+
+  geom_histogram(bins = 50)
+```
+
+```{r}
+
+HMDA_PNW$Action_took <-recode(HMDA_PNW$action_taken,
+             '1'= 'loan originated',
+             '2'= 'application approved but not accepted',
+             '3'= 'application denied',
+             '4'= 'application withdrawn by applicant',
+             '5'= 'file closed for incompleteness',
+             '6'= 'Purchased loan',
+             '7'= 'preapproval request denied',
+             '8'= 'preapproval request approved but not accepted')
+```
+
+```{r}
+HMDA_PNW %>% 
+  select(Action_took, action_taken)
+```
+
+1, loan originated
+2, application approved but not accepted
+3, application denied
+4, application withdrawn by applicant 
+5, file closed for incompleteness
+6, Purchased loan
+7, preapproval request denied
+8, preapproval request approved but not accepted
+
+
+
+
+```{r}
+lei_PNW %>% 
   select(name,count) %>% 
   top_n(5, count)
 ```
 
-
-https://ffiec.cfpb.gov/v2/data-browser-api/view/filers?states=WA&years=2020
-https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?states=WA&years=2020
-
-
 Merge the LEI dataframe with the HMDA dataframe so we can correlate institution name with the LEI. 
-```{r}
-HMDA<- HMDA %>%
-  left_join(x=HMDA, y =lei_WA, by = 'lei')
 
-```
 
 ```{r}
-#Code from George to add LARS lookups.
+#Code from George to add LARS lookups. Although it's not currently working for me. 
 data <- read_lines("../hmda_shiny-missile-toes/data/lars_lookup (1).csv")
 lars_names <- c()
 options <- c()
@@ -91,10 +116,23 @@ write_csv(lars_tib, "../hmda_shiny-missile-toes/data/lars_lookup (1).csv")
 I want to begin exploring the data set for WA by comparing the 'protected' classes from the HMDA
 
 ```{r}
-HMDA_selected<- HMDA %>% 
-  select(lei, derived_ethnicity, derived_race, derived_sex, interest_rate, debt_to_income_ratio, action_taken, census_tract, tract_population, tract_minority_population_percent, applicant_age, applicant_age_above_62, name, count) 
+HMDA_selected<- HMDA_PNW %>% 
+  select(lei, derived_ethnicity, derived_race, derived_sex, interest_rate, debt_to_income_ratio, action_taken, census_tract, tract_population, tract_minority_population_percent, applicant_age, applicant_age_above_62, name, count)
 HMDA_selected
 ```
+
+```{r}
+HMDA_selected %>% 
+  select(derived_race, action_taken, tract_population) %>% 
+  filter(action_taken==1, tract_population>0) %>% 
+  group_by(derived_race) %>% 
+  count() %>% 
+  summarise(proportion = n/tract_population)
+  
+  
+```  
+
+
 
 ```{r}
 HMDA_selected %>% 
@@ -102,7 +140,7 @@ HMDA_selected %>%
   summarise(denied = sum(action_taken=='3', na.rm = TRUE)) %>% 
   mutate(derived_race = fct_reorder(derived_race, denied)) %>%  
   ggplot(aes(x=derived_race,y=denied, fill = derived_race))+
-  geom_col()+
+  geom_()+
   coord_flip()
   
 ```
@@ -112,7 +150,7 @@ HMDA_selected %>%
   group_by(derived_race) %>% 
   summarise(approved = sum(action_taken=='1', na.rm=TRUE)) %>% 
   mutate(derived_race = fct_reorder(derived_race, approved)) %>% 
-  ggplot(aes(x=derived_race,y=approved, fill = derived_race))+
+  ggplot(aes(x=derived_race, y=approved, fill = derived_race))+
   geom_col()+
   coord_flip()
 ```
