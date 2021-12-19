@@ -28,10 +28,22 @@ shinyUI(fluidPage(
         params = list(
           state = list(inputId = "state_code", title = "State:"),
           msa = list(inputId = "derived_msa-md", title = "MSA/MD:"),
-          tract = list(inputId = "census_tract", title = "Census Tract:"),
-          lei = list(inputId = "lei", title = "LEI:")
+          tract = list(inputId = "census_tract", title = "Census Tract:")
         ),
         inline = FALSE
+      ),
+      
+      selectizeGroupUI(
+        id = "primary_lei",
+        params = list(
+          lei = list(inputId = "lei", title = "Select LEI:")
+        ),
+        inline = FALSE
+      ),
+      
+      selectInput("x_axis",
+                  "Select sex or race",
+                  choices = c("derived_sex", "derived_race")
       )
     ), 
     
@@ -39,17 +51,17 @@ shinyUI(fluidPage(
     # Show a plot of the generated distribution
     mainPanel(
       fluidRow(
-        plotOutput("test")
+        dataTableOutput("table")
       ),
       fluidRow(
         column(
           plotlyOutput("sex"),
-          width = 5
-        ),
-        column(
-          plotlyOutput("race"),
-          width = 7
+          width = 12
         )
+        # column(
+        #   plotlyOutput("race"),
+        #   width = 7
+        # )
       )
       
     )

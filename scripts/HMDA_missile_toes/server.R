@@ -16,9 +16,16 @@ shinyServer(function(input, output) {
     module = selectizeGroupServer,
     id = "geography",
     data = loans,
-    vars = c("state_code", "derived_msa-md", "census_tract", "lei")
+    vars = c("state_code", "derived_msa-md", "census_tract")
   )
   
+  filtered_lei <- callModule(
+    module = selectizeGroupServer,
+    id = "primary_lei",
+    data = filtered_loans(),
+    vars = c("lei")
+  )
+
   
   
   output$test <- renderPlot({
@@ -28,20 +35,23 @@ shinyServer(function(input, output) {
       geom_bar()
   })
   
-  # output$table <- renderDataTable({
-  #   filtered_loans() %>% 
-  #     mutate(derived_race = as.factor(derived_race)) %>% 
-  #     table(derived_race) %>% 
-  #     as.data.frame(prop.table(n))
-  #   #datatable(prop)
-  #})
+  output$table <- renderDataTable({
+    race <- table(filtered_loans()$derived_race)
+    prop <- as.data.frame(prop.table(race))
+    colnames(prop) = c("derived_race", "percentage")
+    prop$percentage <- round(prop$percentage * 100, 2)
+    datatable(prop)
+  })
   
   output$sex <- renderPlotly({
+    
     p <- filtered_loans() %>% 
-      #mutate(action_taken = )
-      ggplot(aes(fill = as_factor(action_taken), x = derived_sex)) +
+      mutate(action_taken = as.factor(action_taken)) %>% 
+      ggplot(aes_string(fill = "action_taken", x = input$x_axis)) +
       geom_bar(position='fill') +
-      scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+      scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) +
+      coord_flip() +
+      xlab("")
     ggplotly(p)
     
   })
@@ -56,7 +66,9 @@ shinyServer(function(input, output) {
                                                                        "Application denied", "Application withdrawn by applicant",
                                                                        "File closed for incompleteness", "Purchased loan",
                                                                        "Preapproval request denied",
-                                                                       "Preapproval request approved but not accepted"))
+                                                                       "Preapproval request approved but not accepted")) +
+      theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+    
     ggplotly(p)
     
   })
