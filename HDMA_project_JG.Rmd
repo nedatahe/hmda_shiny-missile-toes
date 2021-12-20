@@ -11,20 +11,27 @@ library(tidyverse)
 #library(jsonlite)
 ```
 
+Don't run unless the API call does not work. 
 ```{r}
-HMDA_PNW<- read_csv('data/state_WA-OR-ID-MT.csv')
+#HMDA_PNW<- read_csv('data/state_WA-OR-ID-MT.csv')
 ```
 
 
-USE THIS CODE FOR API CALL FOR PNW.
+USE THIS CODE FOR API CALL FOR PNW. Add in Alaska or other years if needed. 
 ```{r}
 url <- 'https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?states=WA,MT,ID,OR&years=2020'
 
 response <- GET(url)
 
-HMDA<-content(response, as = "text") %>%
+HMDA_PNW<-content(response, as = "text") %>%
   read_csv()
 ```
+```{r}
+spec(HMDA_PNW)
+```
+I need to examine this and change data types to the correct ones. Should have already done this. 
+
+
 ```{r}
 url_LEI <- 'https://ffiec.cfpb.gov/v2/data-browser-api/view/filers?states=WA,MT,ID,OR&years=2020'
 response_PNW_LEI <- GET(url_LEI) 
@@ -47,34 +54,115 @@ lei_PNW %>%
   geom_histogram(bins = 50)
 ```
 
-```{r}
 
-HMDA_PNW$Action_took <-recode(HMDA_PNW$action_taken,
+Change number code columns to strings. 
+```{r}
+HMDA_PNW$action_taken <-recode(HMDA_PNW$action_taken,
              '1'= 'loan originated',
              '2'= 'application approved but not accepted',
              '3'= 'application denied',
              '4'= 'application withdrawn by applicant',
              '5'= 'file closed for incompleteness',
-             '6'= 'Purchased loan',
+             '6'= 'purchased loan',
              '7'= 'preapproval request denied',
-             '8'= 'preapproval request approved but not accepted')
+             '8'= 'preapproval request approved but not accepted'
+             )
+
+HMDA_PNW$loan_type <-recode(HMDA_PNW$loan_type,
+                            '1' = 'Conventional (not insured or guaranteed by FHA, VA, RHS, or FSA)',
+                            '2' = 'Federal Housing Administration insured (FHA)',
+                            '3' = 'Veterans Affairs guaranteed (VA)',
+                            '4' = 'USDA Rural Housing Service or Farm Service Agency guaranteed (RHS or FSA)'
+                            )
+
+
+
+HMDA_PNW$construction_method <- recode(HMDA_PNW$construction_method,
+                                       '1' = 'Site-built',
+                                       '2' = 'Manufactured home'
+                                       )
+
+HMDA_PNW$reverse_mortgage <- recode(HMDA_PNW$reverse_mortgage,
+                                    '1' = 'Reverse mortgage',
+                                    '2' = 'Not a reverse mortgage',
+                                    '1111' = 'Exempt'
+                                    )
+HMDA_PNW$occupancy_type <- recode(HMDA_PNW$occupancy_type,
+                                  '1' = 'Principal residence',
+                                  '2' = 'Second residence',
+                                  '3' = 'Investment property'
+                                  )
+
+HMDA_PNW$purchaser_type <-recode(HMDA_PNW$purchaser_type,
+                                 '0' = 'Not applicable',
+                                 '1' = 'Fannie Mae',
+                                 '2' = 'Ginnie Mae',
+                                 '3' = 'Freddie Mac',
+                                 '4' = 'Farmer Mac',
+                                 '5' = 'Private securitizer',
+                                 '6' = 'Commercial bank, savings bank, or savings association',
+                                 '71' ='Credit union, mortgage company, or finance company',
+                                 '72' = 'Life insurance company',
+                                 '8' = 'Affiliate institution',
+                                 '9' = 'Other type of purchaser'                                
+                                 )
+
+HMDA_PNW$loan_purpose <- recode(HMDA_PNW$loan_purpose,
+                                '1' = 'Home purchase',
+                                '2' = 'Home improvement',
+                                '31'= 'Refinancing',
+                                '32'= 'Cash-out refinancing',
+                                '4' = 'Other purpose',
+                                '5' = 'Not applicable'
+                                )
+HMDA_PNW$`denial_reason-1`<- recode(HMDA_PNW$`denial_reason-1`,
+       '1' = 'Debt-to-income ratio',
+       '2' = 'Employment history',
+       '3' = 'Credit history',
+       '4' = 'Collateral',
+       '5' = 'Insufficient cash (downpayment, closing costs)',
+       '6' = 'Unverifiable information',
+       '7' = 'Credit application incomplete',
+       '8' = 'Mortgage insurance denied',
+       '9' = 'Other'
+       )
+
+HMDA_PNW$`denial_reason-2`<- recode(HMDA_PNW$`denial_reason-2`,
+       '1' = 'Debt-to-income ratio',
+       '2' = 'Employment history',
+       '3' = 'Credit history',
+       '4' = 'Collateral',
+       '5' = 'Insufficient cash (downpayment, closing costs)',
+       '6' = 'Unverifiable information',
+       '7' = 'Credit application incomplete',
+       '8' = 'Mortgage insurance denied',
+       '9' = 'Other'
+       )
+
+HMDA_PNW$`denial_reason-3`<- recode(HMDA_PNW$`denial_reason-3`,
+       '1' = 'Debt-to-income ratio',
+       '2' = 'Employment history',
+       '3' = 'Credit history',
+       '4' = 'Collateral',
+       '5' = 'Insufficient cash (downpayment, closing costs)',
+       '6' = 'Unverifiable information',
+       '7' = 'Credit application incomplete',
+       '8' = 'Mortgage insurance denied',
+       '9' = 'Other'
+       )
+HMDA_PNW$`denial_reason-4`<- recode(as.numeric(HMDA_PNW$`denial_reason-4`),
+       '1' = 'Debt-to-income ratio',
+       '2' = 'Employment history',
+       '3' = 'Credit history',
+       '4' = 'Collateral',
+       '5' = 'Insufficient cash (downpayment, closing costs)',
+       '6' = 'Unverifiable information',
+       '7' = 'Credit application incomplete',
+       '8' = 'Mortgage insurance denied',
+       '9' = 'Other'
+       )
+
 ```
-
-```{r}
-HMDA_PNW %>% 
-  select(Action_took, action_taken)
-```
-
-1, loan originated
-2, application approved but not accepted
-3, application denied
-4, application withdrawn by applicant 
-5, file closed for incompleteness
-6, Purchased loan
-7, preapproval request denied
-8, preapproval request approved but not accepted
-
-
 
 
 ```{r}
@@ -83,44 +171,22 @@ lei_PNW %>%
   top_n(5, count)
 ```
 
-Merge the LEI dataframe with the HMDA dataframe so we can correlate institution name with the LEI. 
-
-
-```{r}
-#Code from George to add LARS lookups. Although it's not currently working for me. 
-data <- read_lines("../hmda_shiny-missile-toes/data/lars_lookup (1).csv")
-lars_names <- c()
-options <- c()
-for (i in 1:length(data)){
-  if (grepl( "^1 - ", data[i],)) {
-    print(data[i - 3])
-    j <- 0
-    while (grepl( " - ", data[i + j],)) {
-      options <- c(options, data[i + j])
-      lars_names <- c(lars_names, data[i - 3])
-      j <- j + 1
-    }
-  }
-}
-lars_tib <- tibble(lars_names = lars_names, options = options)
-
-```
-
-```{r}
-lars_tib <- lars_tib %>% separate(options, c("key", "value"), " - ", extra = "merge")
-write_csv(lars_tib, "../hmda_shiny-missile-toes/data/lars_lookup (1).csv")
-```
-
-
-
-I want to begin exploring the data set for WA by comparing the 'protected' classes from the HMDA
+I want to begin exploring the data set by comparing the 'protected' classes from the HMDA
 
 ```{r}
 HMDA_selected<- HMDA_PNW %>% 
-  select(lei, derived_ethnicity, derived_race, derived_sex, interest_rate, debt_to_income_ratio, action_taken, census_tract, tract_population, tract_minority_population_percent, applicant_age, applicant_age_above_62, name, count)
-HMDA_selected
+  select(activity_year,lei,'derived_msa-md',state_code,county_code,census_tract,derived_loan_product_type,derived_dwelling_category,derived_ethnicity,derived_race,derived_sex,action_taken,purchaser_type,preapproval,loan_type,loan_purpose,lien_status,reverse_mortgage,loan_amount,loan_to_value_ratio,interest_rate,rate_spread,hoepa_status,total_loan_costs,total_points_and_fees,origination_charges,loan_term,property_value,construction_method,occupancy_type,manufactured_home_land_property_interest,total_units,income,debt_to_income_ratio,applicant_age,'co-applicant_age',applicant_age_above_62,'co-applicant_age_above_62','denial_reason-1','denial_reason-2','denial_reason-3','denial_reason-4',tract_population,tract_minority_population_percent,ffiec_msa_md_median_family_income,tract_to_msa_income_percentage,tract_owner_occupied_units,tract_one_to_four_family_homes,tract_median_age_of_housing_units)
 ```
 
+```{r}
+#HMDA_corr<- 
+HMDA_selected %>%
+  select(where(is.numeric)) %>% 
+  cor(y= HMDA_selected['tract_minority_population_percent'], use = 'complete.obs') %>% 
+  data.frame()
+```
+
+Trying to normalize the # of loans by population of the tract. 
 ```{r}
 HMDA_selected %>% 
   select(derived_race, action_taken, tract_population) %>% 
@@ -128,10 +194,18 @@ HMDA_selected %>%
   group_by(derived_race) %>% 
   count() %>% 
   summarise(proportion = n/tract_population)
-  
-  
 ```  
 
+```{r}
+HMDA_selected %>% sum(HMDA_selected$action_taken == '1', na.rm = TRUE)
+```
+
+
+```{r}
+HMDA_selected %>% 
+  ggplot(aes(x = sum(action_taken), color = derived_sex)) +
+  geom_boxplot()
+```
 
 
 ```{r}
@@ -157,14 +231,9 @@ HMDA_selected %>%
 
 
 Next time: work on making these graphs a proportion of the derived race instead of a count of the loans. 
-Also work on adding in derived ethnicity and transmuting a new column. 
-Use a weighted mean and weight by population size
+Use a weighted mean and weight by population size?
 Also weight by bank size. 
-I don't see a column for disability
-Download the data for the PNW and send it in the slack group. Oregon, washington, Idaho
-
-
-
+I don't see a column for disability- there isn't one. Ignore this part of the MVP. 
 
 ```{r}
 HMDA_selected %>% 
