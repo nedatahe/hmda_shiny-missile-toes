@@ -38,7 +38,7 @@ shinyUI(fluidPage(
       selectizeGroupUI(
         id = "primary_lei",
         params = list(
-          lei = list(inputId = "lei", title = "Select LEI:")
+          lei = list(inputId = "name_lei", title = "Select LEI:")
         ),
         inline = FALSE
       ),

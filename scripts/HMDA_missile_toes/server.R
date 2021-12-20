@@ -27,7 +27,7 @@ shinyServer(function(input, output) {
     module = selectizeGroupServer,
     id = "primary_lei",
     data = filtered_loans(),
-    vars = c("lei")
+    vars = c("name_lei")
   )
   
   # attempting to build filter to deselct peers
@@ -77,7 +77,9 @@ shinyServer(function(input, output) {
       geom_bar(position='fill') +
       scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) +
       coord_flip() +
-      xlab("")
+      xlab("") + 
+      ylab("proportion") +
+      ggtitle(paste("Action Taken Versus ",  input$x_axis))
     ggplotly(p)
     
   })
