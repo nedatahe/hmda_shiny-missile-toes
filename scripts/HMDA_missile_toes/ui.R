@@ -33,6 +33,8 @@ shinyUI(fluidPage(
         inline = FALSE
       ),
       
+      # primary LEI selector code, not currently working - does not change plots
+      
       selectizeGroupUI(
         id = "primary_lei",
         params = list(
@@ -41,20 +43,34 @@ shinyUI(fluidPage(
         inline = FALSE
       ),
       
+      # peer selector code - not currently plotted on the app
+      # need to decide on how to present this
+      
+      selectizeGroupUI(
+        id = "peers",
+        params = list(
+          lei = list(inputId = "lei", title = "Deselect peer LEIs as needed:")
+        ),
+        inline = FALSE
+      ),
+      
+      # code to change the axis of the bar plot
+      
       selectInput("x_axis",
                   "Select sex or race",
                   choices = c("derived_sex", "derived_race")
-      )
+      ),
     ), 
     
     
-    # Show a plot of the generated distribution
     mainPanel(
       fluidRow(
+        # demographic datatable output
         dataTableOutput("table")
       ),
       fluidRow(
         column(
+          #action_taken plot output
           plotlyOutput("sex"),
           width = 12
         )

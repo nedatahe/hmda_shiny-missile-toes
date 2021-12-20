@@ -12,6 +12,8 @@ library(shiny)
 
 shinyServer(function(input, output) {
   
+  # this filters based off of the geographic selections
+  
   filtered_loans <- callModule(
     module = selectizeGroupServer,
     id = "geography",
@@ -19,14 +21,34 @@ shinyServer(function(input, output) {
     vars = c("state_code", "derived_msa-md", "census_tract")
   )
   
+  #filters geographic output for main lei to study
+  
   filtered_lei <- callModule(
     module = selectizeGroupServer,
     id = "primary_lei",
     data = filtered_loans(),
     vars = c("lei")
   )
-
   
+  # attempting to build filter to deselct peers
+  
+  # peers <- reactive({
+  #   if (is.na(input$lei)){
+  #     filtered_loans()
+  #   } else {
+  #     filtered_loans() %>% 
+  #       filter(lei != input$lei)
+  #   }
+  # })
+  # 
+  # filtered_peers <- callModule(
+  #   module = selectizeGroupServer,
+  #   id = "peers",
+  #   data = peers(),
+  #   vars = c("lei")
+  # )
+  
+  # output written to test app - not plotted currently
   
   output$test <- renderPlot({
     filtered_loans() %>% 
@@ -35,6 +57,8 @@ shinyServer(function(input, output) {
       geom_bar()
   })
   
+  # output datatable for demographic breakdown based on race
+  
   output$table <- renderDataTable({
     race <- table(filtered_loans()$derived_race)
     prop <- as.data.frame(prop.table(race))
@@ -42,6 +66,8 @@ shinyServer(function(input, output) {
     prop$percentage <- round(prop$percentage * 100, 2)
     datatable(prop)
   })
+  
+  # output bar plot that can change axis between derived_sex and derived_race
   
   output$sex <- renderPlotly({
     
@@ -55,6 +81,8 @@ shinyServer(function(input, output) {
     ggplotly(p)
     
   })
+  
+  # seperate plot for derived_race - not currently in app - don't need because of reactive axis in above plot
   
   output$race <- renderPlotly({
     p <- filtered_loans() %>% 
