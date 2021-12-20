@@ -59,17 +59,42 @@ shinyServer(function(input, output) {
   
   # output datatable for demographic breakdown based on race
   
-  output$table <- renderDataTable({
+  output$table_lei <- renderDataTable({
+    race <- table(filtered_lei()$derived_race)
+    prop <- as.data.frame(prop.table(race))
+    colnames(prop) = c("derived_race", "percentage")
+    prop$percentage <- round(prop$percentage * 100, 2)
+    datatable(prop,
+              caption = "Lender Breakdown of Race for Area")
+  })
+  
+  output$table_geo <- renderDataTable({
     race <- table(filtered_loans()$derived_race)
     prop <- as.data.frame(prop.table(race))
     colnames(prop) = c("derived_race", "percentage")
     prop$percentage <- round(prop$percentage * 100, 2)
-    datatable(prop)
+    datatable(prop,
+              caption = "Geographic Breakdown of Race for Area")
   })
   
   # output bar plot that can change axis between derived_sex and derived_race
   
-  output$sex <- renderPlotly({
+  output$lei_demo <- renderPlotly({
+    
+    p <- filtered_lei() %>% 
+      mutate(action_taken = as.factor(action_taken)) %>% 
+      ggplot(aes_string(fill = "action_taken", x = input$x_axis)) +
+      geom_bar(position='fill') +
+      scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) +
+      coord_flip() +
+      xlab("") + 
+      ylab("proportion") +
+      ggtitle(paste("Action Taken Versus ",  input$x_axis))
+    ggplotly(p)
+    
+  })
+  
+  output$loans_demo <- renderPlotly({
     
     p <- filtered_loans() %>% 
       mutate(action_taken = as.factor(action_taken)) %>% 

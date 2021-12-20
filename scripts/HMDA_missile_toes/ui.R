@@ -65,21 +65,28 @@ shinyUI(fluidPage(
     
     mainPanel(
       fluidRow(
-        # demographic datatable output
-        dataTableOutput("table")
+        column(
+          # demographic datatable output
+          dataTableOutput("table_geo"),
+          width = 6
+        ),
+        column(
+          dataTableOutput("table_lei"),
+          width = 6
+        )
       ),
       fluidRow(
-        column(
-          #action_taken plot output
-          plotlyOutput("sex"),
-          width = 12
-        )
-        # column(
-        #   plotlyOutput("race"),
-        #   width = 7
-        # )
+        
+        #action_taken plot output
+        plotlyOutput("loans_demo"),
+        width = 12
+      ),
+      fluidRow(
+        plotlyOutput("lei_demo"),
+        width = 12
       )
-      
     )
+    
   )
-))
+)
+)
