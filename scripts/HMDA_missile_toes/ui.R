@@ -21,14 +21,22 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
       
+      # peer selector code
+      
+      sliderInput("peers",
+                  "Select a range of loans by peers:",
+                  min = min_count,
+                  max = max_count,
+                  value = c(min_count, max_count)),
+      
       # state, msa/md and census tract selector code
       
       selectizeGroupUI(
         id = "geography",
         params = list(
-          state = list(inputId = "state_code", title = "State:"),
-          msa = list(inputId = "msa_number_title", title = "MSA/MD:"),
-          tract = list(inputId = "census_tract", title = "Census Tract:")
+          state = list(inputId = "state_code", title = "Select State:"),
+          msa = list(inputId = "msa_number_title", title = "Select MSA/MD:"),
+          tract = list(inputId = "census_tract", title = "Select Census Tract:")
         ),
         inline = FALSE
       ),
@@ -43,20 +51,13 @@ shinyUI(fluidPage(
         inline = FALSE
       ),
       
-      # peer selector code - not currently plotted on the app
-      # need to decide on how to present this
       
-      # sliderInput("peers",
-      #             "Select a range of loans by peers:",
-      #             min = min_count,
-      #             max = max_count,
-      #             value = c(min_count, max_count)),
       
       # code to change the axis of the bar plot
       
       selectInput("x_axis",
-                  "Select sex or race",
-                  choices = c("derived_sex", "derived_race")
+                  "Select sex or race:",
+                  choices = c("derived_sex", "derived_race", "applicant_age")
       ),
       
       width = 3

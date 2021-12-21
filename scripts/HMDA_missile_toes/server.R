@@ -12,12 +12,18 @@ library(shiny)
 
 shinyServer(function(input, output) {
   
+  slider_loans <- reactive({
+
+     loans %>%
+        filter(between(loans$count, input$peers[1], input$peers[2]))
+    })
+  
   # this filters based off of the geographic selections
   
   filtered_loans <- callModule(
     module = selectizeGroupServer,
     id = "geography",
-    data = loans,
+    data = slider_loans,
     vars = c("state_code", "msa_number_title", "census_tract")
   )
   
@@ -30,12 +36,11 @@ shinyServer(function(input, output) {
     vars = c("name_lei")
   )
   
+  
+  
   # attempting to build filter to deselct peers
   
-  # filtered_peers <- reactive({
-  #   filtered_loans %>% 
-  #     filter(between(filtered_loans$count, input$peers[1], input$peers[2]))
-  # })
+  # 
   
   # output written to test app - not plotted currently
   

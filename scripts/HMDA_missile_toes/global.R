@@ -159,8 +159,7 @@ hmda <- function(selected_states, selected_years) {
     read_csv()
 }
 
-# min_count <- loans %>% 
-#   min(loans$count)
-# 
-# max_count <- loans %>% 
-#   max(loans$count)
+min_count <- min(loans$count)
+  
+
+max_count <- max(loans$count)
