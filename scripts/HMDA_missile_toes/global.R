@@ -3,10 +3,11 @@ library(httr)
 library(DT)
 library(plotly)
 
-#reading in state names for the selector dropdown
+options(scipen = 100)
 
-# state_names <- read_csv('../../data/states.csv') %>% 
-#   drop_na()
+#reading in msa names for the selector dropdown
+
+msa_names <- read_csv('../../data/msa_xwalk.csv')
 
 #reading in initial dataset for Pacific Northwest
 
@@ -137,6 +138,12 @@ loans<- loans %>%
 loans <- loans %>% 
   mutate(name_lei = paste(name, "-", lei))
 
+loans <- loans %>% 
+  left_join(x = loans, y = msa_names, by = "derived_msa-md")
+
+loans <- loans %>% 
+  mutate(msa_number_title = paste(`derived_msa-md`, "-", msatitle))
+
 #function for API call for additional state data - not currently used
 
 hmda <- function(selected_states, selected_years) {
@@ -152,3 +159,8 @@ hmda <- function(selected_states, selected_years) {
     read_csv()
 }
 
+# min_count <- loans %>% 
+#   min(loans$count)
+# 
+# max_count <- loans %>% 
+#   max(loans$count)

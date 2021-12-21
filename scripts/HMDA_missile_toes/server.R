@@ -18,7 +18,7 @@ shinyServer(function(input, output) {
     module = selectizeGroupServer,
     id = "geography",
     data = loans,
-    vars = c("state_code", "derived_msa-md", "census_tract")
+    vars = c("state_code", "msa_number_title", "census_tract")
   )
   
   #filters geographic output for main lei to study
@@ -26,27 +26,16 @@ shinyServer(function(input, output) {
   filtered_lei <- callModule(
     module = selectizeGroupServer,
     id = "primary_lei",
-    data = filtered_loans(),
+    data = filtered_loans,
     vars = c("name_lei")
   )
   
   # attempting to build filter to deselct peers
   
-  # peers <- reactive({
-  #   if (is.na(input$lei)){
-  #     filtered_loans()
-  #   } else {
-  #     filtered_loans() %>% 
-  #       filter(lei != input$lei)
-  #   }
+  # filtered_peers <- reactive({
+  #   filtered_loans %>% 
+  #     filter(between(filtered_loans$count, input$peers[1], input$peers[2]))
   # })
-  # 
-  # filtered_peers <- callModule(
-  #   module = selectizeGroupServer,
-  #   id = "peers",
-  #   data = peers(),
-  #   vars = c("lei")
-  # )
   
   # output written to test app - not plotted currently
   
@@ -59,23 +48,51 @@ shinyServer(function(input, output) {
   
   # output datatable for demographic breakdown based on race
   
-  output$table_lei <- renderDataTable({
-    race <- table(filtered_lei()$derived_race)
-    prop <- as.data.frame(prop.table(race))
-    colnames(prop) = c("derived_race", "percentage")
-    prop$percentage <- round(prop$percentage * 100, 2)
-    datatable(prop,
-              caption = "Lender Breakdown of Race for Area")
-  })
   
-  output$table_geo <- renderDataTable({
-    race <- table(filtered_loans()$derived_race)
-    prop <- as.data.frame(prop.table(race))
-    colnames(prop) = c("derived_race", "percentage")
-    prop$percentage <- round(prop$percentage * 100, 2)
-    datatable(prop,
-              caption = "Geographic Breakdown of Race for Area")
+  
+  # output$table_lei <- renderDataTable({
+  #   race <- table(filtered_lei()$derived_race)
+  #   prop <- as.data.frame(prop.table(race))
+  #   colnames(prop) = c("derived_race", "percentage")
+  #   prop$percentage <- round(prop$percentage * 100, 2)
+  #   datatable(prop,
+  #             caption = "Selected Lender Breakdown of Race for Area")
+  # })
+  
+  output$table_lei <- renderDataTable({
+    lei_prop <- filtered_lei() %>%
+      count(derived_race) %>%
+      mutate(prop = prop.table(n))
+
+    as.data.frame(lei_prop)
+
+    lei_prop$prop <- round(lei_prop$prop * 100, 2)
+
+    datatable(lei_prop,
+              caption = "Selected Lender Breakdown of Race for Area")
   })
+
+ output$table_geo <- renderDataTable({
+   loans_prop <- filtered_loans() %>%
+     count(derived_race) %>%
+     mutate(prop = prop.table(n))
+
+   as.data.frame(loans_prop)
+
+   loans_prop$prop <- round(loans_prop$prop * 100, 2)
+
+   datatable(loans_prop,
+             caption = "Geographic Breakdown of Race for Area")
+ })
+  
+  # output$table_geo <- renderDataTable({
+  #   race <- table(filtered_loans()$derived_race)
+  #   prop <- as.data.frame(prop.table(race))
+  #   colnames(prop) = c("derived_race", "percentage")
+  #   prop$percentage <- round(prop$percentage * 100, 2)
+  #   datatable(prop,
+  #             caption = "Geographic Breakdown of Race for Area")
+  # })
   
   # output bar plot that can change axis between derived_sex and derived_race
   
@@ -89,7 +106,7 @@ shinyServer(function(input, output) {
       coord_flip() +
       xlab("") + 
       ylab("proportion") +
-      ggtitle(paste("Action Taken Versus ",  input$x_axis))
+      ggtitle(paste("Selected Lender - Action Taken Versus ",  input$x_axis))
     ggplotly(p)
     
   })
@@ -104,7 +121,7 @@ shinyServer(function(input, output) {
       coord_flip() +
       xlab("") + 
       ylab("proportion") +
-      ggtitle(paste("Action Taken Versus ",  input$x_axis))
+      ggtitle(paste("Geographic - Action Taken Versus ",  input$x_axis))
     ggplotly(p)
     
   })
@@ -118,10 +135,10 @@ shinyServer(function(input, output) {
       geom_bar(position='fill') +
       scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) + 
       scale_color_manual(name = "as_factor(action_taken)", labels = c("Loan originated", "Application approved but not accepted",
-                                                                       "Application denied", "Application withdrawn by applicant",
-                                                                       "File closed for incompleteness", "Purchased loan",
-                                                                       "Preapproval request denied",
-                                                                       "Preapproval request approved but not accepted")) +
+                                                                      "Application denied", "Application withdrawn by applicant",
+                                                                      "File closed for incompleteness", "Purchased loan",
+                                                                      "Preapproval request denied",
+                                                                      "Preapproval request approved but not accepted")) +
       theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
     
     ggplotly(p)
